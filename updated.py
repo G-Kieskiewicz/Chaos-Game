@@ -1,4 +1,5 @@
 import pyvista as pv
+import pygame
 import matplotlib.pyplot as plt
 import math
 import random
@@ -32,29 +33,72 @@ def random_points(points,history):
             break
     return history[0]
 
-"""test = random_points([1,2,3,4,5],history)
-print(test)"""
-
+def generate_chaos_points(vertices, r, iterations):
+    """Run the chaos game and return the list of generated (x, y) points."""
+    current = vertices[0]
+    generated = [current]
+ 
+    for _ in range(iterations):
+        idx = random_points(vertices, history)
+        target = vertices[idx]
+ 
+        x = current[0] + (target[0] - current[0]) * r
+        y = current[1] + (target[1] - current[1]) * r
+ 
+        current = (x, y)
+        generated.append(current)
+ 
+    return generated
+ 
+ 
+def display_points(vertices, generated, length):
+    pygame.init()
+    width = height = length
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Chaos Game")
+    screen.fill((0, 0, 0))
+ 
+    cx, cy = width // 2, height // 2
+ 
+    # plot the fractal points
+    for (x, y) in generated:
+        px, py = int(cx + x), int(cy + y)
+        if 0 <= px < width and 0 <= py < height:
+            screen.set_at((px, py), (0, 255, 140))
+ 
+    # mark the polygon vertices in red for reference
+    for (x, y) in vertices:
+        px, py = int(cx + x), int(cy + y)
+        pygame.draw.circle(screen, (255, 60, 60), (px, py), 3)
+ 
+    pygame.display.flip()
+ 
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+ 
+    pygame.quit()
+ 
+ 
 def main():
     print("=== Chaos Game ===\n")
-    n = int(input("Enter number of verticies, n (>=3): "))
-    r = float(input("Enter the modifier between 0 and 1, r (0...1)"))
+    n = int(input("Enter number of vertices, n (>=3): "))
+    r = float(input("Enter the modifier between 0 and 1, r (0...1): "))
     print("\nGenerating samples... please wait...")
-
-    length = 100
-    points = initialise_polygon(length, n)
-
-    for i in range(n,100000):
-        idx = random_points(points, history)
-        point_1 = points[idx]
-        point_2 = points[i]
-
-        x = point_2[0] + (point_1[0] - point_2[0]) * r
-        y = point_2[1] + (point_1[1] - point_2[1]) * r
-
-        points[i+1].append((x,y))
-
-    print(points)
-
+ 
+    length = 900
+    iterations = 100000
+ 
+    vertices = initialise_polygon(length, n)
+    generated = generate_chaos_points(vertices, r, iterations)
+ 
+    print(f"Generated {len(generated)} points. Opening display window...")
+    display_points(vertices, generated, length)
+ 
+ 
 if __name__ == "__main__":
     main()
